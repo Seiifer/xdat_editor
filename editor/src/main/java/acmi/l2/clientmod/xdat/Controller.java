@@ -309,7 +309,8 @@ public class Controller implements Initializable {
                     if (UIEntity.class.isAssignableFrom(item.getClass())) {
                         try (InputStream is = getClass().getResourceAsStream("/acmi/l2/clientmod/xdat/nodeicons/" + UI_NODE_ICONS.getOrDefault(item.getClass().getSimpleName(), UI_NODE_ICON_DEFAULT))) {
                             setGraphic(new ImageView(new Image(is)));
-                        } catch (IOException ignore) {}
+                        } catch (IOException ignore) {
+                        }
                     }
                 }
             }
@@ -556,12 +557,12 @@ public class Controller implements Initializable {
                 property.setObject(obj);
                 ChangeListener<Object> addToHistory = (observable1, oldValue1, newValue1) -> {
                     String objName = treeItemToScriptString(newSelection);
-                    String propName = ((PropertySheetItem)observable1).getName();
-                    if ("name".equals(propName) || "wnd".equals(propName)){
+                    String propName = ((PropertySheetItem) observable1).getName();
+                    if ("name".equals(propName) || "wnd".equals(propName)) {
                         StringBuilder b = new StringBuilder(objName);
                         String nv = String.valueOf(newValue1);
                         int ind = objName.lastIndexOf(nv);
-                        b.replace(ind, ind + nv.length(), String.valueOf(oldValue1) );
+                        b.replace(ind, ind + nv.length(), String.valueOf(oldValue1));
                         objName = b.toString();
                     }
                     editor.getHistory().valueChanged(objName, property.getName(), newValue1, property.hashCode());
@@ -646,10 +647,9 @@ public class Controller implements Initializable {
         return sb.toString();
     }
 
-    @FXML
-    private void open() {
+    private File pickXdatFile(String msg) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open interface.xdat");
+        fileChooser.setTitle(msg);
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("XDAT (*.xdat)", "*.xdat"),
                 new FileChooser.ExtensionFilter("All files", "*.*"));
@@ -660,8 +660,12 @@ public class Controller implements Initializable {
             fileChooser.setInitialDirectory(initialDirectory.getValue());
 
         File selected = fileChooser.showOpenDialog(editor.getStage());
+        return selected;
+    }
+
+    private Boolean checkXdatFile(File selected) {
         if (selected == null)
-            return;
+            return false;
 
         xdatFile.setValue(selected);
         initialDirectory.setValue(selected.getParentFile());
@@ -674,9 +678,18 @@ public class Controller implements Initializable {
             }
         } catch (IOException e) {
             Dialogs.showException(Alert.AlertType.ERROR, "Read error", e.getMessage(), e);
+            return false;
+        }
+        return true;
+    }
+
+    @FXML
+    private void open() {
+        File selected = pickXdatFile("Open interface.xdat");
+        Boolean isFileValid = checkXdatFile(selected);
+        if (!isFileValid) {
             return;
         }
-
         try {
             IOEntity xdat = editor.getXdatClass().getConstructor().newInstance();
 
@@ -702,7 +715,33 @@ public class Controller implements Initializable {
 
     @FXML
     private void importXdat() {
-        // TODO
+        File selected = pickXdatFile("Import interface.xdat");
+        Boolean isFileValid = checkXdatFile(selected);
+        if (!isFileValid) {
+            return;
+        }
+
+        try {
+            IOEntity xdat = editor.getXdatClass().getConstructor().newInstance();
+
+            editor.execute(() -> {
+                CountingInputStream cis = new CountingInputStream(new BufferedInputStream(new FileInputStream(selected)));
+                try (InputStream is = cis) {
+                    xdat.read(is);
+
+                    Platform.runLater(() -> editor.setXdatObject(xdat));
+                } catch (Throwable e) {
+                    String msg = String.format("Read error before offset 0x%x", cis.getCount());
+                    log.log(Level.WARNING, msg, e);
+                    throw new IOException(msg, e);
+                }
+                return null;
+            }, e -> Dialogs.showException(Alert.AlertType.ERROR, "Read error", "Try to choose another version", e));
+        } catch (ReflectiveOperationException e) {
+            String msg = "XDAT class should have empty public constructor";
+            log.log(Level.WARNING, msg, e);
+            Dialogs.showException(Alert.AlertType.ERROR, "ReflectiveOperationException", msg, e);
+        }
     }
 
     @FXML
