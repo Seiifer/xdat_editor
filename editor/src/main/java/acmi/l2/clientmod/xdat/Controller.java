@@ -125,6 +125,8 @@ public class Controller implements Initializable {
     @FXML
     private MenuItem open;
     @FXML
+    private MenuItem importXdat;
+    @FXML
     private MenuItem save;
     @FXML
     private MenuItem saveAs;
@@ -197,6 +199,7 @@ public class Controller implements Initializable {
         });
         progressBar.visibleProperty().bind(editor.workingProperty());
         open.disableProperty().bind(Bindings.isNull(editor.xdatClassProperty()));
+        importXdat.disableProperty().bind(Bindings.isNull(editor.xdatClassProperty())); // TODO: Disabled if no xdat open yet
         BooleanBinding nullXdatObject = Bindings.isNull(editor.xdatObjectProperty());
         tabs.disableProperty().bind(nullXdatObject);
         save.disableProperty().bind(nullXdatObject);
