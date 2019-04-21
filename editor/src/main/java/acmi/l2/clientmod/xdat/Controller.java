@@ -29,6 +29,8 @@ import acmi.l2.clientmod.l2resources.Tex;
 import acmi.l2.clientmod.unreal.Environment;
 import acmi.l2.clientmod.util.*;
 import acmi.l2.clientmod.xdat.propertyeditor.*;
+import ct26.Window;
+import ct26.XDAT;
 import groovy.lang.GroovyClassLoader;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -70,6 +72,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+//TODO: This should be generic
+import ct26.Window;
+import ct26.XDAT;
 
 public class Controller implements Initializable {
     private static final Logger log = Logger.getLogger(Controller.class.getName());
@@ -716,6 +722,7 @@ public class Controller implements Initializable {
         }
     }
 
+    // TODO: Make it generic so it works for every chronicles, not just H5 (CT2.6) : (Abstract XDAT / Window ?)
     @FXML
     private void importXdat() {
         File selected = pickXdatFile("Import interface.xdat");
@@ -734,6 +741,7 @@ public class Controller implements Initializable {
 
                     IOEntity currentXdat = editor.getXdatObject();
 
+                    // TODO: Make this parametrable as a user choice (input ?)
                     List<String> windowsToImport = Arrays.asList(
                             "",
                             "",
