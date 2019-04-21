@@ -732,7 +732,58 @@ public class Controller implements Initializable {
                 try (InputStream is = cis) {
                     xdat.read(is);
 
-                    Platform.runLater(() -> editor.setXdatObject(xdat));
+                    IOEntity currentXdat = editor.getXdatObject();
+
+                    List<String> windowsToImport = Arrays.asList(
+                            "",
+                            "",
+                            ""
+                    );
+
+                    List<Window> oldWindows = ((XDAT) currentXdat).getWindows();
+                    List<Window> newWindows = new ArrayList<Window>();
+
+                    System.out.println("======== Current ========");
+                    for (Window w : oldWindows) {
+                        System.out.println(w.getName());
+                    }
+                    System.out.println("=========================");
+                    System.out.println("======== Import ========");
+                    for (Window w : ((XDAT) xdat).getWindows()) {
+                        System.out.println(w.getName());
+                    }
+                    System.out.println("========================");
+
+                    boolean isReplaced = false;
+                    Integer nbReplaced = 0, nbAdded = 0;
+
+                    for (Window w : oldWindows) {
+                        if (windowsToImport.contains(w.getName())) {
+                            for (Window wti : ((XDAT) xdat).getWindows()) {
+                                if (wti.getName().equalsIgnoreCase(w.getName())) {
+                                    newWindows.add(wti);
+                                    nbReplaced++;
+                                    isReplaced = true;
+                                    break;
+                                }
+                            }
+                            if (!isReplaced) {
+                                newWindows.add(w); // Not found
+                                nbAdded++;
+                            }
+                            isReplaced = false;
+                        } else {
+                            newWindows.add(w);
+                        }
+                    }
+
+                    ((XDAT) currentXdat).setWindows(newWindows);
+                    editor.setXdatObject(currentXdat);
+
+                    System.out.println(nbReplaced + " windows replaced.");
+                    System.out.println(nbAdded + " windows added.");
+
+                    Platform.runLater(() -> editor.setXdatObject(currentXdat));
                 } catch (Throwable e) {
                     String msg = String.format("Read error before offset 0x%x", cis.getCount());
                     log.log(Level.WARNING, msg, e);
